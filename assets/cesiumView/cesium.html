@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.129/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.129/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    #cesiumContainer {
+      width: 100%;
+      height: 100vh;
+    }
+    #container {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      z-index: 10;
+      width: 264px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #moveCameraButton, #config, #sceneName {
+      background-color: #007bff;
+      color: white;
+      font-size: 32px;
+      font-weight: normal;
+      padding: 16px;
+      border: none;
+      border-radius: 8px;
+      overflow: hidden;
+      display: block;
+    }
+    #moveCameraButton {
+      text-shadow: 2px 2px 4px black;
+      box-shadow: 0 0 4px black;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    #moveCameraButton:active {
+      opacity: 0.5
+    }
+    body.landscape #container {
+      width: 180px;
+    }
+    body.landscape #moveCameraButton,
+    body.landscape #config,
+    body.landscape #sceneName {
+      font-size: 20px;
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="container">
+    <button id="moveCameraButton">Move Camera</button>
+    <button id="config" style="background-color: #aaaaaa;"></button>
+    <button id="sceneName" style="background-color: #555555;"></button>
+  </div>
+
+  <script type="module">
+    const ft_to_m = 0.3048;
+    const m_to_ft = 1 / 0.3048
+    const config = document.getElementById('config')
+    const sceneName = document.getElementById('sceneName')
+    let viewer = null
+
+    async function handler(event){
+      try {
+        const data = JSON.parse(event.data);
+        const CESIUM_ION_TOKEN = data.CESIUM_ION_TOKEN
+        const nameArray = data.nameArrayStr.split('=');
+        const latArray = data.latArrayStr.split('=');
+        const lngArray = data.lngArrayStr.split('=');
+        const altArray = data.altArrayStr.split('=');
+        const headingArray = data.headingArrayStr.split('=');
+        const varidation = data.varidation
+
+        if (data.type==='cesiumToken' && CESIUM_ION_TOKEN) {
+          Cesium.Ion.defaultAccessToken = CESIUM_ION_TOKEN;
+
+          viewer = new Cesium.Viewer('cesiumContainer', {
+            terrain: Cesium.Terrain.fromWorldTerrain(),
+          });
+
+          viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(
+              parseFloat(lngArray[6]) || 139.74557102039313,
+              parseFloat(latArray[6]) || 35.65719446983586,
+              parseInt(Number(altArray[6]) * ft_to_m + 35) || 100
+            ),
+            orientation: {
+              heading: Cesium.Math.toRadians(parseInt(headingArray[6]) || 0),
+              pitch: Cesium.Math.toRadians(-6),
+            },
+            duration: 0
+          });
+
+          const buildingTileset = await Cesium.createOsmBuildingsAsync();
+          viewer.scene.primitives.add(buildingTileset);
+
+          // 初回注釈入力
+          config.textContent = `Lat: ${parseFloat(latArray[6]).toFixed(5)}\nLng: ${parseFloat(lngArray[6]).toFixed(5)}\nAltitude: ${parseInt(altArray[6])}ft\nMAG HDG: ${parseInt(headingArray[6]) - parseFloat(varidation) }°`
+          sceneName.textContent = nameArray[6]
+
+          // ボタンがクリックされたときの処理
+          let index = 7
+          const moveCameraButton = document.getElementById('moveCameraButton');
+          moveCameraButton.addEventListener('click', () => {
+            if(index===7){
+              index = 0
+            } else {
+              index++
+            }
+            const newLat = parseFloat(latArray[index]);
+            const newLng = parseFloat(lngArray[index]);
+            const newAlt = parseInt(Number(altArray[index]) * ft_to_m);
+            const newHeading = parseInt(headingArray[index]);
+
+            config.textContent = `Lat: ${newLat.toFixed(5)}\nLng: ${newLng.toFixed(5)}\nAltitude: ${parseInt(newAlt * m_to_ft)}ft\nMAG HDG: ${newHeading % 360 - parseFloat(varidation)}°`
+            sceneName.textContent = nameArray[index]
+
+            viewer.camera.flyTo({
+              destination: Cesium.Cartesian3.fromDegrees(newLng, newLat, newAlt + 35),
+              orientation: {
+                heading: Cesium.Math.toRadians(newHeading),
+                pitch: Cesium.Math.toRadians(-6),
+              },
+              duration: 3
+            });
+          });
+        } else {
+          alert('No access token')
+        }
+      } catch {
+        alert('error')
+      }
+    }
+    window.addEventListener('message', await handler);  // ios
+    document.addEventListener('message', await handler);  // android
+
+    // 画面の向きに対応してスタイリング変更
+    function updateOrientation() {
+      const isLandscape = window.innerWidth > window.innerHeight;
+      document.body.className = isLandscape ? 'landscape' : 'portrait';
+    }
+    updateOrientation();  // 初回実行
+    window.addEventListener('resize', updateOrientation);
+    window.addEventListener('orientationchange', updateOrientation);  // 向きが変わったときに更新
+  </script>
+</body>
+</html>
