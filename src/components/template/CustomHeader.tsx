@@ -8,6 +8,7 @@ export default function CustomHeader() {
   const isLandscape = width > height;
 
   return (
+    !isLandscape &&
     <View style={[styles.headerContainer, {height: isLandscape? 40: 80}]}>
       <Video
         source={require('../../../assets/movie2.mp4')}

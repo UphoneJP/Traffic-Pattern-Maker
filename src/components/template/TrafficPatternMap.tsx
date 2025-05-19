@@ -32,7 +32,7 @@ export default function TrafficPatternMap(prop: PropsType){
           data.abeamPoint,
           data.baseTurnStartPoint,
           data.TODPoint,
-          data.agl1000,
+          ...(data.agl1000 !== undefined ? [data.agl1000] : []),
           data.agl500
         ].includes(point)
 
@@ -46,7 +46,7 @@ export default function TrafficPatternMap(prop: PropsType){
               title={
                 point === touchdownPoint ? 'Touchdown' :
                 point === data.abeamPoint ? 'Abeam THR' :
-                point === data.baseTurnStartPoint ? `${data.secondsToTurn}s to Turn` :
+                point === data.baseTurnStartPoint ? `${Math.floor(data.secondsToTurn)}s to Turn` :
                 point === data.TODPoint ? 'TOD' :
                 point === data.agl1000 ? '1000ft AGL' :
                 point === data.agl500 ? '500ft AGL' : ''

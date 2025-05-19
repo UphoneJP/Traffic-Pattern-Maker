@@ -53,7 +53,7 @@ export default function TrafficPattern() {
         data.ThresholdPoint,
         touchdownPoint,
         data.TODPoint,
-        ...(data.agl1000 !== undefined ? [data.agl1000] : []),
+        ...(data.agl1000.lat !== undefined ? [data.agl1000] : []),
         data.agl500,
       ]);
       // 経路（曲線込み）を作成

@@ -79,6 +79,13 @@
         if (data.type==='cesiumToken' && CESIUM_ION_TOKEN) {
           Cesium.Ion.defaultAccessToken = CESIUM_ION_TOKEN;
 
+          // viewer = new Cesium.Viewer('cesiumContainer', {
+          //   imageryProvider: new Cesium.UrlTemplateImageryProvider({
+          //     url: "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
+          //   }),
+          //   credit: "地理院タイル"
+          // });
+
           viewer = new Cesium.Viewer('cesiumContainer', {
             terrain: Cesium.Terrain.fromWorldTerrain(),
           });
