@@ -5,7 +5,7 @@ import CustomHeader from '../components/template/CustomHeader';
 import { useLocalSearchParams } from 'expo-router';
 import Constants from 'expo-constants';
 
-export default function App() {
+export default function cesiumWebView() {
   const { nameArrayStr, latArrayStr, lngArrayStr, altArrayStr, headingArrayStr, varidation } = useLocalSearchParams()
   const webViewRef = useRef<WebView>(null);
   const CESIUM_ION_TOKEN = Constants.expoConfig?.extra?.CESIUM_API_KEY
